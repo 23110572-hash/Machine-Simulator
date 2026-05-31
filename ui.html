@@ -637,91 +637,151 @@ const pressureNeedle = document.getElementById('pressure-needle');
 
 let currentRpm = 0;
 
+let isPolling = false;
+let ws = null;
+
 function connect() {
-  const ws = new WebSocket(`ws://${location.host}/ws`);
-  ws.onopen = () => { dot.classList.add('on'); connText.textContent = 'Live'; };
-  ws.onclose = () => { dot.classList.remove('on'); connText.textContent = 'Offline'; setTimeout(connect, 2000); };
+  const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  try {
+    ws = new WebSocket(`${wsProtocol}//${location.host}/ws`);
+    
+    ws.onopen = () => {
+      dot.classList.add('on');
+      connText.textContent = 'Live (WS)';
+      isPolling = false;
+    };
+    
+    ws.onclose = () => {
+      dot.classList.remove('on');
+      connText.textContent = 'Offline';
+      if (!isPolling) {
+        startPolling();
+      }
+    };
+    
+    ws.onerror = (err) => {
+      console.warn("WebSocket error, falling back to HTTP polling:", err);
+      if (!isPolling) {
+        startPolling();
+      }
+    };
+
     ws.onmessage = (e) => {
-    const d = JSON.parse(e.data);
-    outs.volt.textContent = d.volt.toFixed(1);
-    outs.rotate.textContent = d.rotate.toFixed(0);
-    outs.press.textContent = d.pressure.toFixed(1);
-    outs.vib.textContent = d.vibration.toFixed(1);
-
-    // Sync sliders with engine state (only if not being dragged)
-    if (document.activeElement !== sliders.volt.el) {
-      sliders.volt.el.value = d.volt;
-      sliders.volt.label.textContent = d.volt.toFixed(0);
+      const d = JSON.parse(e.data);
+      updateUI(d);
+    };
+  } catch (e) {
+    console.warn("WebSocket failed to initialize, falling back to HTTP polling:", e);
+    if (!isPolling) {
+      startPolling();
     }
-    if (document.activeElement !== sliders.rotate.el) {
-      sliders.rotate.el.value = d.rotate;
-      sliders.rotate.label.textContent = d.rotate.toFixed(0);
+  }
+}
+
+async function startPolling() {
+  if (isPolling) return;
+  isPolling = true;
+  connText.textContent = 'Live (Poll)';
+  dot.classList.add('on');
+
+  while (isPolling) {
+    try {
+      const res = await fetch('/api/state');
+      if (res.ok) {
+        const d = await res.json();
+        updateUI(d);
+      } else {
+        throw new Error("HTTP response error");
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+      dot.classList.remove('on');
+      connText.textContent = 'Offline';
     }
-    if (document.activeElement !== sliders.press.el) {
-      sliders.press.el.value = d.pressure;
-      sliders.press.label.textContent = d.pressure.toFixed(1);
-    }
-    if (document.activeElement !== sliders.vib.el) {
-      sliders.vib.el.value = d.vibration;
-      sliders.vib.label.textContent = d.vibration.toFixed(1);
-    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
 
-    currentRpm = d.rotate;
+function updateUI(d) {
+  outs.volt.textContent = d.volt.toFixed(1);
+  outs.rotate.textContent = d.rotate.toFixed(0);
+  outs.press.textContent = d.pressure.toFixed(1);
+  outs.vib.textContent = d.vibration.toFixed(1);
 
-    // Temperature display
-    if (d.temperature !== undefined) {
-      tempDisplay.textContent = d.temperature.toFixed(0) + '°C';
-      const tempHeat = Math.min(1, Math.max(0, (d.temperature - 25) / 100));
-      tempDisplay.style.fill = tempHeat > 0.7 ? 'var(--red)' : tempHeat > 0.4 ? 'var(--orange)' : 'var(--green)';
-    }
+  // Sync sliders with engine state (only if not being dragged)
+  if (document.activeElement !== sliders.volt.el) {
+    sliders.volt.el.value = d.volt;
+    sliders.volt.label.textContent = d.volt.toFixed(0);
+  }
+  if (document.activeElement !== sliders.rotate.el) {
+    sliders.rotate.el.value = d.rotate;
+    sliders.rotate.label.textContent = d.rotate.toFixed(0);
+  }
+  if (document.activeElement !== sliders.press.el) {
+    sliders.press.el.value = d.pressure;
+    sliders.press.label.textContent = d.pressure.toFixed(1);
+  }
+  if (document.activeElement !== sliders.vib.el) {
+    sliders.vib.el.value = d.vibration;
+    sliders.vib.label.textContent = d.vibration.toFixed(1);
+  }
 
-    // Vibration display
-    vibDisplay.textContent = d.vibration.toFixed(0) + ' mm/s';
-    vibDisplay.style.fill = d.vibration > 80 ? 'var(--red)' : d.vibration > 50 ? 'var(--orange)' : 'var(--green)';
+  currentRpm = d.rotate;
 
-    // Motor heat color
-    const heat = Math.min(1, Math.max(0, (d.volt - 150) / 100));
-    const r = Math.floor(42 + heat * 120);
-    const g = Math.floor(64 - heat * 20);
-    const b = Math.floor(96 - heat * 40);
-    motorGradStart.style.stopColor = `rgb(${r}, ${g}, ${b})`;
+  // Temperature display
+  if (d.temperature !== undefined) {
+    tempDisplay.textContent = d.temperature.toFixed(0) + '°C';
+    const tempHeat = Math.min(1, Math.max(0, (d.temperature - 25) / 100));
+    tempDisplay.style.fill = tempHeat > 0.7 ? 'var(--red)' : tempHeat > 0.4 ? 'var(--orange)' : 'var(--green)';
+  }
 
-    // Pressure needle rotation (0-250 bar maps to -90 to +90 degrees)
-    const needleAngle = -90 + (d.pressure / 250) * 180;
-    pressureNeedle.setAttribute('transform', `rotate(${needleAngle} 520 130)`);
+  // Vibration display
+  vibDisplay.textContent = d.vibration.toFixed(0) + ' mm/s';
+  vibDisplay.style.fill = d.vibration > 80 ? 'var(--red)' : d.vibration > 50 ? 'var(--orange)' : 'var(--green)';
 
-    // Vibration shake
-    if (d.vibration > 50) {
-      const intensity = (d.vibration - 50) / 30;
-      const dx = (Math.random() - 0.5) * intensity * 2;
-      const dy = (Math.random() - 0.5) * intensity * 2;
-      svg.style.transform = `translate(${dx}px, ${dy}px)`;
+  // Motor heat color
+  const heat = Math.min(1, Math.max(0, (d.volt - 150) / 100));
+  const r = Math.floor(42 + heat * 120);
+  const g = Math.floor(64 - heat * 20);
+  const b = Math.floor(96 - heat * 40);
+  motorGradStart.style.stopColor = `rgb(${r}, ${g}, ${b})`;
+
+  // Pressure needle rotation (0-250 bar maps to -90 to +90 degrees)
+  const needleAngle = -90 + (d.pressure / 250) * 180;
+  pressureNeedle.setAttribute('transform', `rotate(${needleAngle} 520 130)`);
+
+  // Vibration shake
+  if (d.vibration > 50) {
+    const intensity = (d.vibration - 50) / 30;
+    const dx = (Math.random() - 0.5) * intensity * 2;
+    const dy = (Math.random() - 0.5) * intensity * 2;
+    svg.style.transform = `translate(${dx}px, ${dy}px)`;
+  } else {
+    svg.style.transform = 'translate(0,0)';
+  }
+
+  // Flow animation speed based on pressure
+  const flowSpeed = d.pressure < 5 ? 0 : Math.max(0.3, 150 / d.pressure);
+  document.querySelectorAll('.air-flow, .air-flow-down').forEach(el => {
+    if (flowSpeed === 0) {
+      el.style.opacity = '0';
     } else {
-      svg.style.transform = 'translate(0,0)';
+      el.style.opacity = String(Math.min(0.9, d.pressure / 120));
+      el.style.animationDuration = flowSpeed + 's';
     }
+  });
 
-    // Flow animation speed based on pressure
-    const flowSpeed = d.pressure < 5 ? 0 : Math.max(0.3, 150 / d.pressure);
-    document.querySelectorAll('.air-flow, .air-flow-down').forEach(el => {
-      if (flowSpeed === 0) {
-        el.style.opacity = '0';
-      } else {
-        el.style.opacity = String(Math.min(0.9, d.pressure / 120));
-        el.style.animationDuration = flowSpeed + 's';
-      }
-    });
-
-    // Oil flow
-    const oilSpeed = currentRpm < 50 ? 0 : Math.max(0.5, 2000 / currentRpm);
-    document.querySelectorAll('.oil-flow').forEach(el => {
-      if (oilSpeed === 0) {
-        el.style.opacity = '0';
-      } else {
-        el.style.opacity = '0.5';
-        el.style.animationDuration = oilSpeed + 's';
-      }
-    });
-  };
+  // Oil flow
+  const oilSpeed = currentRpm < 50 ? 0 : Math.max(0.5, 2000 / currentRpm);
+  document.querySelectorAll('.oil-flow').forEach(el => {
+    if (oilSpeed === 0) {
+      el.style.opacity = '0';
+    } else {
+      el.style.opacity = '0.5';
+      el.style.animationDuration = oilSpeed + 's';
+    }
+  });
+}
 }
 
 // ─── Rotor Animation ───

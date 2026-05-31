@@ -63,7 +63,13 @@ async def simulation_loop():
 
 @app.get("/api/state")
 def get_state():
-    return last_reading if last_reading else machine.get_state()
+    global last_reading
+    import time
+    # If the background loop is not actively updating (e.g., on Vercel serverless),
+    # manually tick the machine to progress the simulation time.
+    if not last_reading or (time.time() - last_reading.get("timestamp", 0) > 3.0):
+        last_reading = machine.tick()
+    return last_reading
 
 @app.post("/api/params")
 def set_params(params: ParamUpdate):
