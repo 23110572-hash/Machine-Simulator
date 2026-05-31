@@ -1,38 +1,38 @@
 # Industrial Screw Air Compressor Simulator
 
-## 🎯 Overview
+## Overview
 
-This is a **physics-based simulation** of an industrial screw air compressor, similar to what you'd create in **Simulink**, **AutoCAD**, or **SolidWorks**. It models real physical interactions between four key parameters:
+This is a physics-based simulation of an industrial screw air compressor, similar to what you'd create in Simulink, AutoCAD, or SolidWorks. It models real physical interactions between four key parameters:
 
-1. **Voltage** (V) - Electrical power supply
-2. **Rotation** (RPM) - Motor/compressor speed  
-3. **Pressure** (bar) - Compressed air pressure
-4. **Vibration** (mm/s) - Mechanical vibration
+1. Voltage (V) - Electrical power supply
+2. Rotation (RPM) - Motor/compressor speed  
+3. Pressure (bar) - Compressed air pressure
+4. Vibration (mm/s) - Mechanical vibration
 
-## ✨ Key Features
+## Key Features
 
 ### Physics-Based Simulation
-- ✅ Differential equations for motor dynamics
-- ✅ Rotational inertia and damping
-- ✅ Pressure generation and leakage
-- ✅ Thermal modeling (temperature)
-- ✅ Wear accumulation over time
-- ✅ Coupled parameter interactions
+- Differential equations for motor dynamics
+- Rotational inertia and damping
+- Pressure generation and leakage
+- Thermal modeling (temperature)
+- Wear accumulation over time
+- Coupled parameter interactions
 
 ### Real-Time Visualization
-- 🎨 Interactive CAD-style 3D visualization
-- 📊 Live telemetry display
-- 🔄 Animated rotating components
-- 💧 Fluid flow animation
-- 🌡️ Visual feedback (heat, vibration)
+- Interactive CAD-style 3D visualization
+- Live telemetry display
+- Animated rotating components
+- Fluid flow animation
+- Visual feedback (heat, vibration)
 
 ### Simulink-Like Behavior
-- ⚙️ Time-domain integration
-- 🔗 Coupled system dynamics
-- 📈 Realistic response curves
-- 🎛️ Adjustable parameters in real-time
+- Time-domain integration
+- Coupled system dynamics
+- Realistic response curves
+- Adjustable parameters in real-time
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -46,31 +46,16 @@ python server.py
 ```
 
 ### 3. Open in Browser
-Navigate to: **http://localhost:7000**
+Navigate to: http://localhost:9000
 
 ### 4. Adjust Parameters
 Use the sliders on the left sidebar to control:
-- **Voltage**: 0-300V (normal: 150-220V)
-- **Rotation**: 0-3000 RPM (normal: 300-1500 RPM)
-- **Pressure**: 0-250 bar (normal: 80-150 bar)
-- **Vibration**: 0-150 mm/s (normal: 20-60 mm/s)
+- Voltage: 0-300V (normal: 150-220V)
+- Rotation: 0-3000 RPM (normal: 300-1500 RPM)
+- Pressure: 0-250 bar (normal: 80-150 bar)
+- Vibration: 0-150 mm/s (normal: 20-60 mm/s)
 
-## 🧪 Test the Physics
-
-Run the test suite to see how parameters interact:
-
-```bash
-python test_physics.py
-```
-
-This will demonstrate:
-- Normal steady-state operation
-- High load conditions
-- Overspeed scenarios
-- Dynamic response to changes
-- Pressure buildup from zero
-
-## 📚 How It Works
+## How It Works
 
 ### Physical Model
 
@@ -107,26 +92,26 @@ This will demonstrate:
 
 **Motor Torque:**
 ```
-T_motor = (V × η_motor) / (RPM/1000 + 1) × 10
+T_motor = (V x efficiency_motor) / (RPM/1000 + 1) x 10
 ```
 
 **Rotational Dynamics:**
 ```
-α = (T_motor - T_load - T_damping) / I
-RPM_new = RPM_old + α × dt
+alpha = (T_motor - T_load - T_damping) / I
+RPM_new = RPM_old + alpha x dt
 ```
 
 **Pressure Generation:**
 ```
-dP/dt = (RPM/500) × η_comp × 2 - leak_rate × P
+dP/dt = (RPM/500) x efficiency_comp x 2 - leak_rate x P
 ```
 
 **Vibration:**
 ```
-V_total = V_base + (RPM/1000)^1.5 × 15 + imbalance_factors
+V_total = V_base + (RPM/1000)^1.5 x 15 + imbalance_factors
 ```
 
-## 🎮 Usage Examples
+## Usage Examples
 
 ### Example 1: Normal Operation
 ```python
@@ -160,7 +145,7 @@ for i in range(10):
     time.sleep(1)
 ```
 
-## 📊 Telemetry Data
+## Telemetry Data
 
 Each `tick()` returns:
 
@@ -172,14 +157,14 @@ Each `tick()` returns:
     "pressure": 101.62,              # Pressure (bar)
     "vibration": 42.35,              # Vibration (mm/s)
     "is_anomaly": False,             # Anomaly flag
-    "temperature": 45.2,             # Motor temp (°C)
+    "temperature": 45.2,             # Motor temp (C)
     "wear": 2.5,                     # Wear percentage
     "motor_torque": 125.5,           # Motor torque (Nm)
     "load_torque": 45.2              # Load torque (Nm)
 }
 ```
 
-## ⚠️ Anomaly Detection
+## Anomaly Detection
 
 The system automatically detects dangerous conditions:
 
@@ -191,9 +176,9 @@ The system automatically detects dangerous conditions:
 | Overspeed | >2500 RPM | Mechanical failure |
 | Overpressure | >200 bar | Tank rupture |
 | Excessive vibration | >80 mm/s | Bearing damage |
-| Overheating | >120°C | Thermal damage |
+| Overheating | >120C | Thermal damage |
 
-## 🔧 Customization
+## Customization
 
 ### Modify Physical Constants
 
@@ -202,7 +187,7 @@ Edit `machine_engine.py`:
 ```python
 self.motor_efficiency = 0.85       # Motor efficiency (0-1)
 self.compressor_efficiency = 0.75  # Compression efficiency (0-1)
-self.rotor_inertia = 2.5          # Rotational inertia (kg·m²)
+self.rotor_inertia = 2.5          # Rotational inertia (kg x m^2)
 self.bearing_damping = 0.15       # Bearing damping coefficient
 self.leak_rate = 0.02             # Pressure leak rate
 ```
@@ -236,48 +221,43 @@ Edit `ui.html` CSS variables:
 }
 ```
 
-## 📖 Documentation
-
-- **[SIMULATION_GUIDE.md](SIMULATION_GUIDE.md)** - Detailed physics explanation and experiments
-- **[test_physics.py](test_physics.py)** - Test suite with examples
-
-## 🎓 Learning Outcomes
+## Learning Outcomes
 
 This simulation teaches:
 
-1. **Electromechanical Systems** - How electrical and mechanical systems interact
-2. **Control Theory** - PID control, setpoints, and feedback
-3. **Thermodynamics** - Heat generation and cooling
-4. **Vibration Analysis** - Sources and effects of vibration
-5. **Predictive Maintenance** - How wear and operating conditions affect equipment life
+1. Electromechanical Systems - How electrical and mechanical systems interact
+2. Control Theory - PID control, setpoints, and feedback
+3. Thermodynamics - Heat generation and cooling
+4. Vibration Analysis - Sources and effects of vibration
+5. Predictive Maintenance - How wear and operating conditions affect equipment life
 
-## 🔄 Comparison to Other Tools
+## Comparison to Other Tools
 
 | Feature | This Simulator | Simulink | AutoCAD | SolidWorks |
 |---------|---------------|----------|---------|------------|
-| Physics simulation | ✅ | ✅ | ❌ | ✅ |
-| Real-time control | ✅ | ⚠️ | ❌ | ⚠️ |
-| Web-based | ✅ | ❌ | ❌ | ❌ |
-| 3D CAD modeling | ⚠️ | ❌ | ✅ | ✅ |
-| Free & open source | ✅ | ❌ | ❌ | ❌ |
-| Easy to customize | ✅ | ⚠️ | ❌ | ❌ |
+| Physics simulation | Yes | Yes | No | Yes |
+| Real-time control | Yes | Partial | No | Partial |
+| Web-based | Yes | No | No | No |
+| 3D CAD modeling | Partial | No | Yes | Yes |
+| Free & open source | Yes | No | No | No |
+| Easy to customize | Yes | Partial | No | No |
 
-## 🚀 Future Enhancements
+## Future Enhancements
 
-- [ ] PID controller implementation
-- [ ] Multi-stage compression
-- [ ] Oil system simulation
-- [ ] Acoustic/noise modeling
-- [ ] 3D visualization with Three.js
-- [ ] Machine learning integration
-- [ ] Historical data logging
-- [ ] Export to Simulink format
+- PID controller implementation
+- Multi-stage compression
+- Oil system simulation
+- Acoustic/noise modeling
+- 3D visualization with Three.js
+- Machine learning integration
+- Historical data logging
+- Export to Simulink format
 
-## 📝 License
+## License
 
 This project is open source. Feel free to modify and extend it for your needs.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Areas for improvement:
 - More realistic physics models
@@ -288,6 +268,6 @@ Contributions welcome! Areas for improvement:
 
 ---
 
-**Happy Simulating! 🎉**
+**Happy Simulating!**
 
-For questions or issues, please refer to the documentation or test files.
+For questions or issues, please refer to the codebase.
